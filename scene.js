@@ -5,15 +5,21 @@ function startScene() {
   const play = document.querySelector("#play");
   const seek = document.querySelector("#seek");
   const clock = document.querySelector("#clock");
-  const tung = document.querySelector("#tung");
-  const muc = document.querySelector("#muc");
+  const viewButtons = Array.from(document.querySelectorAll(".switch button"));
   const perspective = document.querySelector("#perspective");
   const screen = document.querySelector(".screen");
+  const screens = document.querySelector(".screens");
+  const secondView = document.querySelector("#second-view");
+  const frameNumber = document.querySelector("#frame-number");
+  const lastFrame = document.querySelector("#last-frame");
+  const previous = document.querySelector("#previous-frame");
+  const next = document.querySelector("#next-frame");
 
   const width = scene.width;
   const height = scene.height;
   const scale = Math.min(2, window.devicePixelRatio || 1);
-  const layers = [scene, document.createElement("canvas"), document.createElement("canvas")];
+  const layers = [scene, document.createElement("canvas"), document.createElement("canvas"),
+                  document.querySelector("#comparison-scene")];
   const contexts = layers.map(canvas => {
     canvas.width = width * scale;
     canvas.height = height * scale;
@@ -90,15 +96,20 @@ function startScene() {
 
   let frame = 0;
   function nextFrame(now) {
-    frame = 0;
+    frame = requestAnimationFrame(nextFrame);
     engine.tick(now / 1000);
   }
-  function showState(seconds, duration, playing, esp) {
-    const tenths = Math.floor(seconds * 10);
+  let displayedView = -1;
+  function showState(index, endFrame, fps, playing, view) {
+    const tenths = Math.floor(index * 10 / fps);
     clock.value = "00:" + String(Math.floor(tenths / 10)).padStart(2, "0") + "." + tenths % 10;
     seek.value = tenths;
     seek.setAttribute("aria-valuetext", (tenths / 10).toLocaleString("vi") + " giây");
-    seek.style.setProperty("--progress", (100 * seconds / duration) + "%");
+    seek.style.setProperty("--progress", (100 * index / endFrame) + "%");
+    frameNumber.value = String(index).padStart(3, "0");
+    if (lastFrame.textContent !== String(endFrame)) lastFrame.textContent = endFrame;
+    previous.disabled = index === 0;
+    next.disabled = index === endFrame;
 
     const action = playing ? "Tạm dừng" : "Phát";
     if (play.title !== action) {
@@ -106,11 +117,13 @@ function startScene() {
       play.title = action;
       play.setAttribute("aria-label", action);
     }
-    if (screen.classList.contains("esp") !== Boolean(esp)) {
-      tung.setAttribute("aria-pressed", String(!esp));
-      muc.setAttribute("aria-pressed", String(Boolean(esp)));
-      screen.classList.toggle("esp", Boolean(esp));
-      perspective.textContent = esp ? "Góc nhìn của Mực" : "Góc nhìn của Tùng";
+    if (displayedView !== view) {
+      viewButtons.forEach((button, i) => button.setAttribute("aria-pressed", String(i === view)));
+      screen.classList.toggle("esp", view === 1);
+      perspective.textContent = view === 1 ? "Góc nhìn của Mực" : "Góc nhìn của Tùng";
+      screens.classList.toggle("comparing", view === 2);
+      secondView.hidden = view !== 2;
+      displayedView = view;
     }
     if (playing && !frame) frame = requestAnimationFrame(nextFrame);
     if (!playing && frame) {
@@ -129,12 +142,14 @@ function startScene() {
   play.addEventListener("click", toggle);
   document.querySelector("#reset").addEventListener("click", () => engine.reset());
   seek.addEventListener("input", () => engine.seekTo(Number(seek.value) / 10, performance.now() / 1000));
-  tung.addEventListener("click", () => engine.setView(false));
-  muc.addEventListener("click", () => engine.setView(true));
+  viewButtons.forEach((button, i) => button.addEventListener("click", () => engine.setView(i)));
+  previous.addEventListener("click", () => engine.stepFrame(-1));
+  next.addEventListener("click", () => engine.stepFrame(1));
   document.addEventListener("keydown", event => {
     if (event.altKey || event.ctrlKey || event.metaKey || event.repeat) return;
-    if (event.key === "1") engine.setView(false);
-    if (event.key === "2") engine.setView(true);
+    if (["1", "2", "3"].includes(event.key)) engine.setView(Number(event.key) - 1);
+    if (event.key === ",") engine.stepFrame(-1);
+    if (event.key === ".") engine.stepFrame(1);
     if (event.code === "Space" && !event.target.closest("button,input")) {
       event.preventDefault();
       toggle();

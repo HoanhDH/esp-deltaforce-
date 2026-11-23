@@ -3,12 +3,15 @@
 namespace {
 using namespace canvas;
 constexpr int width = 1200;
-constexpr double duration = 16;
+constexpr int duration = 16;
+constexpr int frameRate = 30;
+constexpr int lastFrame = duration * frameRate;
 constexpr const char* highlight = "#d9ff97";
+enum class View : int { Tung, Muc, Compare };
 
 extern "C" __attribute__((import_module("host"), import_name("sin"))) double sine(double angle);
 extern "C" __attribute__((import_module("host"), import_name("showState")))
-void showState(double seconds, double total, bool playing, bool esp);
+void showState(int frame, int endFrame, int fps, bool playing, View view);
 
 class Random {
 public:
@@ -225,7 +228,7 @@ void marker(double x, double seconds) {
 double elapsed = 0;
 double startedAt = 0;
 bool playing = false;
-bool esp = false;
+View view = View::Tung;
 
 double clampTime(double seconds) {
     if (seconds < 0) return 0;
@@ -233,14 +236,27 @@ double clampTime(double seconds) {
     return seconds;
 }
 
+int currentFrame() {
+    // Rounding noise from frame -> seconds -> frame must not move a paused frame back.
+    const int index = static_cast<int>(elapsed * frameRate + 1e-9);
+    return index < lastFrame ? index : lastFrame;
+}
+
 void render() {
-    const double x = 523 + elapsed * 28;
+    const int frame = currentFrame();
+    const double seconds = static_cast<double>(frame) / frameRate;
+    const double x = 523 + seconds * 28;
+    selectLayer(Layer::Screen);
     drawLayer(Layer::Harbor);
     ellipse(x + 5, 337, 21, 2.5, "rgba(21,36,32,.28)");
-    walker(x, elapsed, false);
+    walker(x, seconds, false);
     drawLayer(Layer::Container);
-    if (esp) marker(x, elapsed);
-    showState(elapsed, duration, playing, esp);
+    if (view == View::Compare) {
+        selectLayer(Layer::Comparison);
+        drawLayer(Layer::Screen);
+    }
+    if (view != View::Tung) marker(x, seconds);
+    showState(frame, lastFrame, frameRate, playing, view);
 }
 } // namespace
 
@@ -250,12 +266,18 @@ EXPORT(init) void init() {
     paintHarbor();
     selectLayer(Layer::Container);
     paintContainer();
-    selectLayer(Layer::Screen);
     render();
 }
 
-EXPORT(setView) void setView(bool highlighted) {
-    esp = highlighted;
+EXPORT(setView) void setView(View selected) {
+    view = selected;
+    render();
+}
+
+EXPORT(stepFrame) void stepFrame(int direction) {
+    const int adjacent = currentFrame() + direction;
+    elapsed = clampTime(static_cast<double>(adjacent) / frameRate);
+    playing = false;
     render();
 }
 
@@ -286,7 +308,10 @@ EXPORT(toggle) void toggle(double now) {
 
 EXPORT(tick) void tick(double now) {
     if (!playing) return;
-    elapsed = clampTime(now - startedAt);
+    const int previousFrame = currentFrame();
+    const double nextTime = now - startedAt;
+    if (nextTime <= elapsed) return;
+    elapsed = clampTime(nextTime);
     if (elapsed >= duration) playing = false;
-    render();
+    if (!playing || currentFrame() != previousFrame) render();
 }

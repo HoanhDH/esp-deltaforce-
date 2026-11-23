@@ -24,13 +24,20 @@
       <div class="switch" role="group" aria-label="Chọn góc nhìn">
         <button id="tung" type="button" aria-pressed="true">Tùng <small>Góc thường</small></button>
         <button id="muc" type="button" aria-pressed="false">Mực <small>Góc ESP</small></button>
+        <button id="compare" type="button" aria-pressed="false">Đối chiếu <small>Hai góc nhìn</small></button>
       </div>
     </div>
     <section class="player" aria-label="Trình phát cảnh mô phỏng">
-      <div class="screen">
-        <canvas id="scene" width="1200" height="500" role="img" aria-label="Cảnh mô phỏng một người đi bộ ngang qua bến cảng, phía sau thùng hàng."></canvas>
-        <div class="scene-label"><i></i><span id="perspective">Góc nhìn của Tùng</span></div>
-        <div class="location"><span>Bến cảng</span><span class="scene-name">Cầu tàu phía đông</span></div>
+      <div class="screens">
+        <div class="screen">
+          <canvas id="scene" width="1200" height="500" role="img" aria-labelledby="perspective" aria-description="Một người đi bộ ngang qua bến cảng, phía sau thùng hàng."></canvas>
+          <div class="scene-label"><i></i><span id="perspective">Góc nhìn của Tùng</span></div>
+          <div class="location"><span>Bến cảng</span><span class="scene-name">Cầu tàu phía đông</span></div>
+        </div>
+        <div id="second-view" class="screen esp" hidden>
+          <canvas id="comparison-scene" width="1200" height="500" role="img" aria-labelledby="comparison-label" aria-description="Đường viền cho biết vị trí nhân vật ở cùng khung hình."></canvas>
+          <div class="scene-label"><i></i><span id="comparison-label">Góc nhìn của Mực</span></div>
+        </div>
       </div>
       <div class="controls">
         <button type="button" class="play" id="play" aria-label="Phát" title="Phát"><span class="play-icon" aria-hidden="true"></span></button>
@@ -39,8 +46,14 @@
         <input id="seek" type="range" min="0" max="160" step="1" value="0" aria-label="Vị trí trong cảnh" aria-valuetext="0 giây">
         <span class="duration">00:16.0</span>
       </div>
+      <div class="frame-controls" role="group" aria-label="Duyệt từng khung hình">
+        <span class="frame-count">Khung <output id="frame-number" aria-live="off">000</output> / <span id="last-frame">480</span></span>
+        <button id="previous-frame" type="button" aria-label="Lùi một khung hình" title="Lùi một khung hình (,)" aria-keyshortcuts="," disabled>‹</button>
+        <button id="next-frame" type="button" aria-label="Tiến một khung hình" title="Tiến một khung hình (.)" aria-keyshortcuts=".">›</button>
+        <span class="frame-rate">30 khung/giây</span>
+      </div>
     </section>
-    <footer><span class="hint"><kbd>Space</kbd> Phát / dừng</span><span class="hint"><kbd>1</kbd><kbd>2</kbd> Chọn góc nhìn</span></footer>
+    <footer><span class="hint"><kbd>Space</kbd> Phát / dừng</span><span class="hint"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> Chọn góc nhìn</span><span class="hint"><kbd>,</kbd><kbd>.</kbd> Lùi / tiến một khung</span></footer>
   </main>
 </body>
 </html>

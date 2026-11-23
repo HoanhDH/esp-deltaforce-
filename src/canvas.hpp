@@ -9,7 +9,7 @@ struct Point {
     double y;
 };
 
-enum class Layer : int { Screen, Harbor, Container };
+enum class Layer : int { Screen, Harbor, Container, Comparison };
 
 #define CANVAS_IMPORT(name) __attribute__((import_module("canvas"), import_name(#name)))
 extern "C" {

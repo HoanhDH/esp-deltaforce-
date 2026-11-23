@@ -1,4 +1,10 @@
 #include "canvas.hpp"
+#include "replay.hpp"
+#if !defined(__wasm__)
+#include <cmath>
+#endif
+
+namespace replay {
 
 namespace {
 using namespace canvas;
@@ -7,11 +13,12 @@ constexpr int duration = 16;
 constexpr int frameRate = 30;
 constexpr int lastFrame = duration * frameRate;
 constexpr const char* highlight = "#d9ff97";
-enum class View : int { Tung, Muc, Compare };
 
+#if defined(__wasm__)
 extern "C" __attribute__((import_module("host"), import_name("sin"))) double sine(double angle);
-extern "C" __attribute__((import_module("host"), import_name("showState")))
-void showState(int frame, int endFrame, int fps, bool playing, View view);
+#else
+double sine(double angle) { return std::sin(angle); }
+#endif
 
 class Random {
 public:
@@ -183,7 +190,7 @@ void paintContainer() {
 
 void walker(double x, double seconds, bool outlined) {
     const double stride = sine(seconds * 4.8);
-    const double lift = __builtin_fabs(stride) * 1.5;
+    const double lift = (stride < 0 ? -stride : stride) * 1.5;
     const char* body = outlined ? highlight : "#283b39";
     const char* back = outlined ? "#afdc7e" : "#455550";
     save();
@@ -260,8 +267,7 @@ void render() {
 }
 } // namespace
 
-#define EXPORT(name) extern "C" __attribute__((export_name(#name)))
-EXPORT(init) void init() {
+void init() {
     selectLayer(Layer::Harbor);
     paintHarbor();
     selectLayer(Layer::Container);
@@ -269,32 +275,32 @@ EXPORT(init) void init() {
     render();
 }
 
-EXPORT(setView) void setView(View selected) {
+void setView(View selected) {
     view = selected;
     render();
 }
 
-EXPORT(stepFrame) void stepFrame(int direction) {
+void stepFrame(int direction) {
     const int adjacent = currentFrame() + direction;
     elapsed = clampTime(static_cast<double>(adjacent) / frameRate);
     playing = false;
     render();
 }
 
-EXPORT(reset) void reset() {
+void reset() {
     playing = false;
     elapsed = 0;
     render();
 }
 
-EXPORT(seekTo) void seekTo(double seconds, double now) {
+void seekTo(double seconds, double now) {
     elapsed = clampTime(seconds);
     startedAt = now - elapsed;
     if (elapsed >= duration) playing = false;
     render();
 }
 
-EXPORT(toggle) void toggle(double now) {
+void toggle(double now) {
     if (playing) {
         elapsed = clampTime(now - startedAt);
         playing = false;
@@ -306,7 +312,7 @@ EXPORT(toggle) void toggle(double now) {
     render();
 }
 
-EXPORT(tick) void tick(double now) {
+void tick(double now) {
     if (!playing) return;
     const int previousFrame = currentFrame();
     const double nextTime = now - startedAt;
@@ -315,3 +321,4 @@ EXPORT(tick) void tick(double now) {
     if (elapsed >= duration) playing = false;
     if (!playing || currentFrame() != previousFrame) render();
 }
+} // namespace replay

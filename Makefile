@@ -7,7 +7,7 @@ WASM_LINK = -Wl,--no-entry -Wl,--export-memory -Wl,--strip-all
 scene.wasm.js: scene.wasm
 	python3 -c 'import base64, pathlib; data = base64.b64encode(pathlib.Path("$<").read_bytes()).decode("ascii"); print("// Generated from src/scene.cpp by make.\nconst sceneWasmBase64 = \"" + data + "\";")' > $@
 
-scene.wasm: src/scene.cpp src/canvas.hpp
+scene.wasm: src/scene.cpp src/canvas.hpp src/replay.hpp
 	$(WASM_CXX) $(WASM_FLAGS) $(WASM_LINK) $< -o $@
 
 .INTERMEDIATE: scene.wasm

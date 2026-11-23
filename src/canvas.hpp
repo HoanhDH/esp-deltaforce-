@@ -1,6 +1,6 @@
 #pragma once
 
-// The browser provides these Canvas 2D primitives to the WebAssembly module.
+// Implemented by QPainter on the desktop and Canvas 2D in the browser.
 // Coordinates use the original 1200 x 500 scene regardless of display density.
 namespace canvas {
 
@@ -11,8 +11,12 @@ struct Point {
 
 enum class Layer : int { Screen, Harbor, Container, Comparison };
 
+#if defined(__wasm__)
 #define CANVAS_IMPORT(name) __attribute__((import_module("canvas"), import_name(#name)))
 extern "C" {
+#else
+#define CANVAS_IMPORT(name)
+#endif
 CANVAS_IMPORT(selectLayer) void selectLayer(Layer layer);
 CANVAS_IMPORT(drawLayer) void drawLayer(Layer layer);
 CANVAS_IMPORT(save) void save();
@@ -32,7 +36,9 @@ CANVAS_IMPORT(text) void text(const char* value, double x, double y, const char*
 CANVAS_IMPORT(linearGradient) void linearGradient(double x1, double y1, double x2, double y2);
 CANVAS_IMPORT(radialGradient) void radialGradient(double x, double y, double r1, double r2);
 CANVAS_IMPORT(colorStop) void colorStop(double offset, const char* color);
+#if defined(__wasm__)
 }
+#endif
 #undef CANVAS_IMPORT
 
 template<unsigned N>

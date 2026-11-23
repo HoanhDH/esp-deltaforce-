@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#131716">
+  <title>Khoảng khuất · Phòng chiếu</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+  <script src="scene.js" defer></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="brand"><span class="brandmark" aria-hidden="true"></span>Phòng chiếu</div>
+    <span class="offline"><i></i>Mô phỏng ngoại tuyến</span>
+  </header>
+  <main>
+    <div class="intro">
+      <div>
+        <h1>Khoảng khuất<span>.</span></h1>
+        <p>Chuyển góc nhìn để theo dấu người đi sau thùng hàng.</p>
+      </div>
+      <div class="switch" role="group" aria-label="Chọn góc nhìn">
+        <button id="tung" type="button" aria-pressed="true">Tùng <small>Góc thường</small></button>
+        <button id="muc" type="button" aria-pressed="false">Mực <small>Góc ESP</small></button>
+      </div>
+    </div>
+    <section class="player" aria-label="Trình phát cảnh mô phỏng">
+      <div class="screen">
+        <canvas id="scene" width="1200" height="500" role="img" aria-label="Cảnh mô phỏng một người đi bộ ngang qua bến cảng, phía sau thùng hàng."></canvas>
+        <div class="scene-label"><i></i><span id="perspective">Góc nhìn của Tùng</span></div>
+        <div class="location"><span>Bến cảng</span><span class="scene-name">Cầu tàu phía đông</span></div>
+      </div>
+      <div class="controls">
+        <button type="button" class="play" id="play" aria-label="Phát" title="Phát"><span class="play-icon" aria-hidden="true"></span></button>
+        <button type="button" class="reset" id="reset" aria-label="Về đầu cảnh" title="Về đầu cảnh"><span aria-hidden="true"></span></button>
+        <output id="clock" aria-hidden="true">00:00.0</output>
+        <input id="seek" type="range" min="0" max="160" step="1" value="0" aria-label="Vị trí trong cảnh" aria-valuetext="0 giây">
+        <span class="duration">00:16.0</span>
+      </div>
+    </section>
+    <footer><span class="hint"><kbd>Space</kbd> Phát / dừng</span><span class="hint"><kbd>1</kbd><kbd>2</kbd> Chọn góc nhìn</span></footer>
+  </main>
+</body>
+</html>
